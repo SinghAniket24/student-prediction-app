@@ -83,14 +83,36 @@ export default function Prediction() {
         fontFamily: "Arial, sans-serif",
       }}
     >
-      <h2 style={{ textAlign: "center", marginBottom: "25px", color: "#007bff" }}>
+      <h2
+        style={{
+          textAlign: "center",
+          marginBottom: "25px",
+          color: "#007bff",
+          fontSize: "clamp(20px, 2.5vw, 28px)",
+        }}
+      >
         Student Result Prediction
       </h2>
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "18px",
+        }}
+      >
         {Object.keys(formData).map((key) => (
           <div key={key} style={{ display: "flex", flexDirection: "column" }}>
-            <label style={{ marginBottom: "6px", fontWeight: "600" }}>{key}</label>
+            <label
+              style={{
+                marginBottom: "6px",
+                fontWeight: "600",
+                fontSize: "clamp(14px, 2vw, 16px)",
+              }}
+            >
+              {key}
+            </label>
             {key === "Age" ? (
               <input
                 type="number"
@@ -99,17 +121,29 @@ export default function Prediction() {
                 max={22}
                 value={formData[key]}
                 onChange={handleChange}
-                style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc" }}
+                style={{
+                  padding: "10px",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc",
+                  fontSize: "16px",
+                }}
               />
             ) : (
               <select
                 name={key}
                 value={formData[key]}
                 onChange={handleChange}
-                style={{ padding: "10px", borderRadius: "6px", border: "1px solid #ccc" }}
+                style={{
+                  padding: "10px",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc",
+                  fontSize: "16px",
+                }}
               >
                 {Object.keys(mapping[key]).map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
                 ))}
               </select>
             )}
@@ -126,6 +160,7 @@ export default function Prediction() {
             color: "white",
             fontWeight: "600",
             cursor: "pointer",
+            fontSize: "16px",
           }}
         >
           {loading ? "Predicting..." : "Predict"}
@@ -146,27 +181,32 @@ export default function Prediction() {
             justifyContent: "center",
             alignItems: "center",
             zIndex: 1000,
+            padding: "10px",
           }}
           onClick={() => setShowModal(false)}
         >
           <div
             style={{
               backgroundColor: "white",
-              padding: "30px",
+              padding: "20px",
               borderRadius: "12px",
               textAlign: "center",
-              minWidth: "300px",
-              maxWidth: "90%",
+              width: "100%",
+              maxWidth: "400px",
               boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginBottom: "15px", color: "#dc3545" }}>Prediction Result</h3>
-            <p style={{ fontSize: "18px", marginBottom: "10px" }}>
+            <h3 style={{ marginBottom: "15px", color: "#dc3545", fontSize: "20px" }}>
+              Prediction Result
+            </h3>
+            <p style={{ fontSize: "16px", marginBottom: "10px" }}>
               <strong>Result:</strong> {prediction}
             </p>
             {passProbability !== null && (
-              <p style={{ fontSize: "16px" }}>Pass Probability: {passProbability}%</p>
+              <p style={{ fontSize: "15px" }}>
+                Pass Probability: {passProbability}%
+              </p>
             )}
             <button
               onClick={() => setShowModal(false)}
@@ -185,6 +225,21 @@ export default function Prediction() {
           </div>
         </div>
       )}
+
+      {/* Responsive Styles */}
+      <style>{`
+        @media (max-width: 600px) {
+          form {
+            gap: 14px;
+          }
+          select, input {
+            font-size: 14px;
+          }
+          button {
+            font-size: 14px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

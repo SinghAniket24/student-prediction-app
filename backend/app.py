@@ -37,7 +37,7 @@ def predict():
         # Make prediction
         prediction = model.predict(features_array)[0]
 
-        # Get probability of class 1 (pass)
+        # Get probability of class 1 (passing )
         proba_pass = model.predict_proba(features_array)[0][1]  # index 1 is probability of class 1
 
         return jsonify({
