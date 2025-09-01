@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+
+
 export default function Prediction() {
   const [formData, setFormData] = useState({
     "Past Class Failures": "None",
@@ -18,6 +20,7 @@ export default function Prediction() {
   const [passProbability, setPassProbability] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+
 
   const mapping = {
     "Past Class Failures": { "None": 0, "One": 1, "Two": 2, "Three or More": 3 },
@@ -65,14 +68,19 @@ export default function Prediction() {
       setPrediction(data.prediction);
       setPassProbability(data.pass_probability);
       setShowModal(true);
+    
+
     } catch (error) {
       console.error("Error while fetching prediction:", error);
       setPrediction("Error connecting to backend.");
       setShowModal(true);
+     
     } finally {
       setLoading(false);
     }
   };
+
+
 
   return (
     <div
