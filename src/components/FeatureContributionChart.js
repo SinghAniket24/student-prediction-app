@@ -29,9 +29,9 @@ const FeatureContributionChart = ({ shapValues }) => {
   const data =
   Array.isArray(shapValues)
     ? shapValues 
-    :Object.entries(shapValues).map(([feature, value]) => ({
+    :Object.entries(shapValues).map(([feature, contribution]) => ({
     feature,
-    contribution: value,
+    contribution: Number(contribution),
   }));
 
   //const data = shapValues; // you already pass an array

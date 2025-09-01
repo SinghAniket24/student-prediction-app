@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+// In Prediction.js, after getting prediction
+import { useNavigate } from "react-router-dom";
 
 
 export default function Prediction() {
@@ -20,6 +22,8 @@ export default function Prediction() {
   const [passProbability, setPassProbability] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+
 
 
   const mapping = {
@@ -68,6 +72,11 @@ export default function Prediction() {
       setPrediction(data.prediction);
       setPassProbability(data.pass_probability);
       setShowModal(true);
+      // Save prediction and payload
+      setTimeout(() => {
+      navigate("/analysis", { state: { payload, prediction: data.prediction } });
+}, 4000); // 4000 ms = 4 seconds
+
     
 
     } catch (error) {
