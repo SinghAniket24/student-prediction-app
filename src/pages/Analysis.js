@@ -131,22 +131,34 @@ const Analysis = () => {
   }, [payload]);
 
 
-    return (
-      
-  
-      <div className="p-6 space-y-8">
-      <h1 className="text-2xl font-bold">Analysis</h1>
-      
-      {/* SHAP Feature Contribution */}
-      <FeatureContributionChart shapValues={shapValues} />
+   return (
+  <div className="page-container"
+  style={{
+        padding: "20px",
+        maxWidth: "650px",
+        margin: "auto",
+        fontFamily: "Arial, sans-serif",
+      }}>
+    <h2  style={{
+          textAlign: "center",
+          marginBottom: "25px",
+          color: "#007bff",
+          fontSize: "clamp(20px, 2.5vw, 28px)",
+        }}>Analysis</h2>
 
-      {/* User Comparison */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4">Your Input vs Dataset Average</h2>
-        <UserComparisonBars averages={userComparison} />
-      </div>
+    {/* SHAP Feature Contribution */}
+    <FeatureContributionChart shapValues={shapValues} />
+
+    {/* User Comparison */}
+    <div style={{ marginTop: "40px" }}>
+      <h2 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+        Your Inputs vs Dataset Averages
+      </h2>
+      <UserComparisonBars averages={userComparison} />
     </div>
-  );
+  </div>
+);
+
 };
 
 export default Analysis;

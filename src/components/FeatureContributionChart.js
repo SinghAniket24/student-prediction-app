@@ -11,7 +11,13 @@ import {
 } from "recharts";
 
 const FeatureContributionChart = ({ shapValues }) => {
-  if (!shapValues  || Object.keys(shapValues).length === 0) { return <p>No feature contributions available.</p>;}
+  if (!shapValues  || Object.keys(shapValues).length === 0) {
+    return(
+      <div className="p-6 bg-white shadow rounded-2xl text-center">
+        <p className="text-gray-500">No feature contributions available.</p>
+      </div>
+    );
+  }
 
   /*Convert shapValues object into array for Recharts
     
@@ -86,7 +92,7 @@ const insight = `Your ${positiveFeatures.join(', ')} are the main reasons for th
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 20, right: 40, left: 80, bottom: 20 }}
+          margin={{ top: 10, right: 30, left: 100, bottom: 10 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis type="number"  domain={[-1, 1]}/>
@@ -94,10 +100,12 @@ const insight = `Your ${positiveFeatures.join(', ')} are the main reasons for th
            tickFormatter={(val) => val.length > 20 ? val.slice(0,20) + '...' : val}
            />
           
-          <Tooltip />
+          <Tooltip 
+          formatter={(val) => val.toFixed(3)}
+              contentStyle={{ borderRadius: "10px" }}/>
           <Bar
             dataKey="contribution"
-            barSize={20}
+            barSize={22}
             // Red if >0 (pushing towards Fail), Green if <0 (helping Pass)
             label={{ position: "right" }}
             //background={{ fill: "#e0e0e0" }} // gray background for zero line
@@ -113,7 +121,7 @@ const insight = `Your ${positiveFeatures.join(', ')} are the main reasons for th
         </BarChart>
       </ResponsiveContainer>
       </div>
-      <h3>{explanation}</h3>
+      <p className="mt-6 text-center text-gray-700 font-medium max-w-2xl mx-auto leading-relaxed">{explanation}</p>
     </div>
   );
 };

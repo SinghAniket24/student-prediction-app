@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-{/*
+/*
 import React from "react";
 
 const UserComparisonBars = ({ averages }) => {
@@ -58,13 +58,17 @@ if (!averages || !Array.isArray(averages) || averages.length === 0) {
 };
 
 export default UserComparisonBars;
-*/}
+*/
 
 
 
 const UserComparisonGroupedBar = ({ averages }) => {
   if (!averages || !Array.isArray(averages) || averages.length === 0) {
-    return <p>No comparison data available.</p>;
+    return(
+      <div className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm text-center">
+        <p className="text-gray-600">No comparison data available.</p>
+      </div>
+    );
   }
 
   // Transform data for recharts
@@ -75,11 +79,14 @@ const UserComparisonGroupedBar = ({ averages }) => {
   }));
 
   return (
+  <div className="p-6 bg-white border border-gray-200 rounded-2xl shadow-md mt-6">
+    <div className="h-96">
+
     <div style={{ width: "100%", height: 400 }}>
       <ResponsiveContainer>
         <BarChart
           data={chartData}
-          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+          margin={{ top: 20, right: 20, left: 10, bottom: 60 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
@@ -88,15 +95,19 @@ const UserComparisonGroupedBar = ({ averages }) => {
             textAnchor="end"
             interval={0}
             height={70}
+            tick={{ fontSize: 12 }}
+
           />
           <YAxis />
           <Tooltip />
-          <Legend />
-          <Bar dataKey="Your Input" fill="#f97316" />
+          <Legend verticalAlign="top" height={36} />
           <Bar dataKey="Dataset Avg" fill="#3b82f6" />
+          <Bar dataKey="Your Input" fill="#f97316" />
         </BarChart>
       </ResponsiveContainer>
     </div>
+    </div>
+  </div>
   );
 };
 

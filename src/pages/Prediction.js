@@ -75,7 +75,7 @@ export default function Prediction() {
       // Save prediction and payload
       setTimeout(() => {
       navigate("/analysis", { state: { payload, prediction: data.prediction } });
-}, 4000); // 4000 ms = 4 seconds
+}, 2000); // 2000 ms = 2 seconds
 
     
 
@@ -92,7 +92,8 @@ export default function Prediction() {
 
 
   return (
-    <div
+    
+    <div className="page-container"
       style={{
         padding: "20px",
         maxWidth: "650px",
@@ -108,7 +109,7 @@ export default function Prediction() {
           fontSize: "clamp(20px, 2.5vw, 28px)",
         }}
       >
-        Student Result Prediction
+        Student Performance Prediction
       </h2>
 
       <form
