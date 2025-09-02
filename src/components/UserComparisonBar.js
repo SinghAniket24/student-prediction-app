@@ -1,5 +1,16 @@
+import React from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
-
+{/*
 import React from "react";
 
 const UserComparisonBars = ({ averages }) => {
@@ -21,7 +32,6 @@ if (!averages || !Array.isArray(averages) || averages.length === 0) {
 
         return (
           <div key={index} style={{ width: "100%" }}>
-            {/* Label */}
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
               <span style={{ fontWeight: "bold" }}>{item.feature}</span>
               <span style={{ color: "gray" }}>
@@ -29,7 +39,6 @@ if (!averages || !Array.isArray(averages) || averages.length === 0) {
               </span>
             </div>
 
-            {/* Bar */}
             <div style={{ background: "#e5e7eb", borderRadius: "8px", height: "16px", width: "100%" }}>
               <div
                 style={{
@@ -49,3 +58,47 @@ if (!averages || !Array.isArray(averages) || averages.length === 0) {
 };
 
 export default UserComparisonBars;
+*/}
+
+
+
+const UserComparisonGroupedBar = ({ averages }) => {
+  if (!averages || !Array.isArray(averages) || averages.length === 0) {
+    return <p>No comparison data available.</p>;
+  }
+
+  // Transform data for recharts
+  const chartData = averages.map((item) => ({
+    feature: item.feature,
+    "Your Input": item.user,
+    "Dataset Avg": item.avg,
+  }));
+
+  return (
+    <div style={{ width: "100%", height: 400 }}>
+      <ResponsiveContainer>
+        <BarChart
+          data={chartData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey="feature"
+            angle={-30}
+            textAnchor="end"
+            interval={0}
+            height={70}
+          />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="Your Input" fill="#f97316" />
+          <Bar dataKey="Dataset Avg" fill="#3b82f6" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+export default UserComparisonGroupedBar;
+
