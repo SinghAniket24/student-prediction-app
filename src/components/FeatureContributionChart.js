@@ -1,5 +1,5 @@
 import React from "react";
-import {
+/*import {1
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -32,7 +32,8 @@ const FeatureContributionChart = ({ shapValues }) => {
     /*const shapArray = Object.entries(data.shapValues).map(([feature, contribution]) => ({ feature, contribution }));
     setShapValues(shapArray);*/
 
-  const data =
+    
+  /*const data =1
   Array.isArray(shapValues)
     ? shapValues 
     :Object.entries(shapValues).map(([feature, contribution]) => ({
@@ -55,7 +56,7 @@ const FeatureContributionChart = ({ shapValues }) => {
   .map(f => f.feature)
   .slice(0, 2);
   
-  const explanation = `Your ${positive.join(" and ")} are the main reasons for the prediction. But your ${negative.join(" and ")} are helping you.`;
+  const explanation = `Your ${positive.join(" and ")} are the main reasons for the prediction. But your ${negative.join(" and ")} are helping you.`;1*/
 
 /*const positiveFeatures = shapValues.filter(f => f.contribution < 0).map(f => f.feature);
 const negativeFeatures = shapValues.filter(f => f.contribution > 0).map(f => f.feature);
@@ -81,7 +82,7 @@ const negativeFeatures = topShapArray
 
 const insight = `Your ${positiveFeatures.join(', ')} are the main reasons for the prediction. But your ${negativeFeatures.join(', ')} are helping you.`;
 */
-  return (
+/* 1 return (
     <div className="p-4 bg-white shadow rounded-2xl mt-6">
       <h2 className="text-lg font-semibold mb-4">
         Feature Contributions to Prediction
@@ -122,6 +123,108 @@ const insight = `Your ${positiveFeatures.join(', ')} are the main reasons for th
       </ResponsiveContainer>
       </div>
       <p className="mt-6 text-center text-gray-700 font-medium max-w-2xl mx-auto leading-relaxed">{explanation}</p>
+    </div>
+  );
+};
+
+export default FeatureContributionChart;
+*/
+
+
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  Cell
+} from "recharts";
+
+const FeatureContributionChart = ({ shapValues = [], predictedClass = null, topN = 5 }) => {
+  // shapValues expected as array of objects: [{ feature, contribution }, ...]
+  if (!shapValues || shapValues.length === 0) {
+    return (
+      <div className="p-6 bg-white shadow rounded-2xl text-center">
+        <p className="text-gray-500">No feature contributions available.</p>
+      </div>
+    );
+  }
+
+  // Normalize shapValues into {feature, contribution}
+  const data =
+    Array.isArray(shapValues)
+      ? shapValues.map(item => ({
+          feature: String(item.feature),
+          contribution: Number(item.contribution)
+        }))
+      : Object.entries(shapValues).map(([feature, contribution]) => ({
+          feature,
+          contribution: Number(contribution)
+        }));
+
+  // Pick topN by absolute contribution for clarity (then reverse so biggest is on top)
+  const topData = [...data]
+    .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+    .slice(0, topN)
+    .reverse(); // reverse so the largest bar appears at top in vertical layout
+
+  // Positive/negative feature lists (for the explanation)
+  const positiveFeatures = topData.filter(f => f.contribution > 0).map(f => f.feature);
+  const negativeFeatures = topData.filter(f => f.contribution < 0).map(f => f.feature);
+
+  // Decide color mapping relative to the predicted class:
+  // If predictedClass indicates PASS (string contains 'pass' or numeric 1), then
+  // positive contributions mean "push toward PASS" (green).
+  // If predictedClass indicates FAIL (contains 'fail' or 0), then positive
+  // contributions push toward FAIL (we color them red).
+  const predLower = predictedClass ? String(predictedClass).toLowerCase() : "";
+  const positiveMeansPass = predLower.includes("pass") || predLower === "1" || predLower === "true";
+
+  const positiveColor = positiveMeansPass ? "#16a34a" : "#ef4444"; // green if pushing PASS, red if pushing FAIL
+  const negativeColor = positiveMeansPass ? "#ef4444" : "#16a34a"; // opposite color
+
+  // Build readable explanation
+  const targetLabel = predictedClass ? String(predictedClass) : "the selected class";
+  const explanation = `The bars show how each feature moved the model output. Positive bars (green) push the model toward ${targetLabel}; negative bars (red) push it away. Top contributors pushing toward ${targetLabel}: ${positiveFeatures.length ? positiveFeatures.join(", ") : "none"}. Features pushing away: ${negativeFeatures.length ? negativeFeatures.join(", ") : "none"}.`;
+
+  return (
+    <div className="p-4 bg-white shadow rounded-2xl mt-6">
+      <h2 className="text-lg font-semibold mb-4">
+        Feature Contributions to Prediction
+      </h2>
+      <div className="h-80">
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            data={topData}
+            layout="vertical"
+            margin={{ top: 10, right: 30, left: 120, bottom: 10 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis type="number" domain={['auto', 'auto']} />
+            <YAxis
+              dataKey="feature"
+              type="category"
+              width={140}
+              tickFormatter={(val) => (val && val.length > 24 ? val.slice(0, 24) + "..." : val)}
+            />
+            <Tooltip formatter={(val) => Number(val).toFixed(3)} contentStyle={{ borderRadius: "10px" }} />
+            <Bar dataKey="contribution" barSize={22} label={{ position: "right" }}>
+              {topData.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={entry.contribution > 0 ? positiveColor : negativeColor}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <p className="mt-6 text-center text-gray-700 font-medium max-w-2xl mx-auto leading-relaxed">
+        {explanation}
+      </p>
     </div>
   );
 };

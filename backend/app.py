@@ -16,18 +16,18 @@ model = load("student_prediction.joblib")
 #df = pd.read_csv("dataset/student-por.csv")  # use the same dataset you trained on
 
 # Define the exact order of features your model expects
-FEATURE_ORDER = [
-    "Past Class Failures",
-    "Number of School Absences",
-    "Family Relationship Quality",
-    "Weekend Alcohol Consumption",
-    "Social Outings With Friends",
-    "Higher Education Ambition",
-    "Age",
-    "Free Time After School",
-    "Father’s Education Level",
-    "Current Health Status",
-]
+feature_mapping = {
+    "Past Class Failures": "failures",
+    "Number of School Absences": "absences",
+    "Family Relationship Quality": "famrel",
+    "Weekend Alcohol Consumption": "Walc",
+    "Social Outings With Friends": "goout",
+    "Higher Education Ambition": "higher",
+    "Age": "age",
+    "Free Time After School": "freetime",
+    "Father’s Education Level": "Fedu",
+    "Current Health Status": "health",
+}
 
 
 @app.route("/predict", methods=["POST"])
@@ -35,22 +35,22 @@ def predict():
     try:
         data = request.get_json()
 
-        # Create feature vector in the exact order
-        features = [data[key] for key in FEATURE_ORDER]
+        # Remap keys
+        model_input = {feature_mapping[k]: v for k, v in data.items() if k in feature_mapping}
 
-        # Convert to numpy array (1 sample, many features)
-        features_array = np.array(features).reshape(1, -1)
+        # Ensure order matches training
+        input_df = pd.DataFrame([model_input], columns=model.feature_names_in_)
 
         # Make prediction
-        prediction = model.predict(features_array)[0]
-
+        prediction = model.predict(input_df)[0]
         # Get probability of class 1 (passing )
-        proba_pass = model.predict_proba(features_array)[0][1]  # index 1 is probability of class 1
+        proba_pass = model.predict_proba(input_df)[0][1]  # index 1 is probability of class 1
 
         return jsonify({
             "prediction": str(prediction),
             "pass_probability": round(float(proba_pass) * 100, 2)  # percentage with 2 decimals
         })
+    
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -62,6 +62,7 @@ def predict():
 
 # --- SHAP FEATURE CONTRIBUTION ENDPOINT ---
 
+'''
 @app.route("/shap", methods=["POST"])
 def shap_explanation():
     try:
@@ -77,14 +78,14 @@ def shap_explanation():
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(input_df)
 
-        '''
+        //Comment---------------
         # Handle single array or list of arrays
         if isinstance(shap_values, list):
             # binary classification
             shap_array = shap_values[1][0]
         else:
             shap_array = shap_values[0]  # single output
-        '''
+        //---------------
 
         # Handle both list and array outputs for binary classification
         if isinstance(shap_values, list):
@@ -111,6 +112,188 @@ def shap_explanation():
     except Exception as e:
         print("SHAP ERROR:", e)  # Log full error to console
         return jsonify({"error": str(e), "shap_values": {}}), 400
+'''
+'''
+working 2
+@app.route("/shap", methods=["POST"])
+def shap_explanation():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid input"}), 400
+
+        # Remap to training feature names
+        model_input = {feature_mapping[k]: v for k, v in data.items() if k in feature_mapping}
+        # Build DataFrame in the exact feature order and numeric type
+        input_df = pd.DataFrame([model_input], columns=model.feature_names_in_)
+
+
+        # Predict and proba
+        prediction = model.predict(input_df)[0]
+        probabilities = model.predict_proba(input_df)[0]
+        class_labels = list(model.classes_)
+
+        # Compute SHAP values
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(input_df)
+
+        pred_class = int(model.predict(input_df)[0])   # 0 = Fail, 1 = Pass
+
+
+        # Normalize and unwrap nested arrays safely
+        def unwrap_scalar(x):
+            x = np.array(x)
+            if x.size == 1:
+                return float(x.item())
+            # If multiple elements, pick first (shouldn't happen for single sample)
+            return float(x.ravel()[0])
+
+
+        # Select the right class's SHAP array (handles list or single-array return)
+        # Build per-class dict: { class_label: [{feature, contribution}, ...] }
+        per_class = {}
+        if isinstance(shap_values, list):
+            shap_array = shap_values[pred_class][0]  # first (and only) sample
+        else:
+            shap_array = shap_values[0]
+
+        # --- Convert safely to floats ---
+        shap_dict = {}
+        for feature, val in zip(model.feature_names_in_, shap_array):
+            if isinstance(val, (list, np.ndarray)):
+                val = np.ravel(val)[0]   # take the first scalar
+
+                #shap_dict[feature] = float(val.item())  # safely unwrap
+            shap_dict[feature] = float(val)
+        # Convert back to friendly names for frontend
+        reverse_map = {v: k for k, v in feature_mapping.items()}
+        shap_dict_friendly = {reverse_map.get(f, f): val for f, val in shap_dict.items()}
+
+        shap_dict_sorted = dict(sorted(shap_dict_friendly.items(), key=lambda x: abs(x[1]), reverse=True))
+
+        print("MODEL CLASSES:", model.classes_)
+        print("MODEL.feature_names_in_:", model.feature_names_in_)
+        print("INPUT DF:\n", input_df)
+       
+        print("PREDICT_PROBA:", model.predict_proba(input_df)[0])
+        print("RAW SHAP TYPE/SHAPE:", type(shap_values), np.array(shap_values).shape)
+        return jsonify({"shap_values": shap_dict_sorted})
+
+
+
+
+    except Exception as e:
+        print("SHAP ERROR:", e)
+        return jsonify({"error": str(e), "shap_values": {}}), 400
+      
+'''
+@app.route("/shap", methods=["POST"])
+def shap_explanation():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "Invalid input"}), 400
+
+        # Remap to training feature names
+        model_input = {feature_mapping[k]: v for k, v in data.items() if k in feature_mapping}
+        # Build DataFrame in the exact feature order and numeric type
+        input_df = pd.DataFrame([model_input], columns=model.feature_names_in_)
+
+
+        # Predict and proba
+        prediction = model.predict(input_df)[0]
+        probabilities = model.predict_proba(input_df)[0]
+        class_labels = list(model.classes_)
+
+        # Compute SHAP values
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(input_df)
+
+        #pred_class = int(model.predict(input_df)[0])   # 0 = Fail, 1 = Pass
+        pred_class_idx = int(np.where(model.classes_ == prediction)[0][0])
+        # Safely unwrap SHAP values for the predicted class
+        if isinstance(shap_values, list):
+            # Multi-class: pick predicted class array, first sample
+            shap_for_pred = shap_values[pred_class_idx][0]
+        else:
+            # Single-output: use first sample
+            shap_for_pred = shap_values[0]
+
+
+        # Normalize and unwrap nested arrays safely
+        def unwrap_scalar(x):
+            x = np.array(x)
+            if x.size == 1:
+                return float(x.item())
+            # If multiple elements, pick first (shouldn't happen for single sample)
+            return float(x.ravel()[0])
+
+
+        '''
+        # Select the right class's SHAP array (handles list or single-array return)
+        # Build per-class dict: { class_label: [{feature, contribution}, ...] }
+        per_class = {}
+        if isinstance(shap_values, list):
+            # shap_values: list per class, each is (n_samples, n_features)
+            for idx, cls in enumerate(class_labels):
+                arr = shap_values[idx][0]  # first (only) sample
+                feats = []
+                for feat_name, val in zip(model.feature_names_in_, arr):
+                    feats.append({
+                        "feature": feat_name,
+                        "contribution": unwrap_scalar(val)
+                    })
+                # sort by absolute contribution descending
+                feats_sorted = sorted(feats, key=lambda x: abs(x["contribution"]), reverse=True)
+                per_class[str(cls)] = feats_sorted
+        else:
+            # single-output SHAP (unlikely for multiclass), treat as class 0
+            arr = shap_values[0]
+            feats = [{"feature": f, "contribution": unwrap_scalar(v)} for f, v in zip(model.feature_names_in_, arr)]
+            per_class[str(class_labels[0])] = sorted(feats, key=lambda x: abs(x["contribution"]), reverse=True)
+            '''
+
+        # Build feature contributions
+        feats = [{"feature": f, "contribution": unwrap_scalar(v)}
+                 for f, v in zip(model.feature_names_in_, shap_for_pred)]
+        
+
+        # Sort by absolute contribution descending
+        feats_sorted = sorted(feats, key=lambda x: abs(x["contribution"]), reverse=True)
+
+
+        
+        # Convert feature names back to friendly labels for frontend
+        reverse_map = {v: k for k, v in feature_mapping.items()}
+        def to_friendly(feat_list):
+            return [{"feature": reverse_map.get(item["feature"], item["feature"]),
+                     "contribution": item["contribution"]} for item in feat_list]
+
+        feats_friendly = [{"feature": reverse_map.get(item["feature"], item["feature"]),
+                           "contribution": item["contribution"]} for item in feats_sorted]
+
+
+
+        resp = {
+           "predicted_class": str(prediction),
+            "predicted_class_index": pred_class_idx,
+            "probabilities": {str(cls): float(p) for cls, p in zip(class_labels, probabilities)},
+            "shap_by_class": {str(prediction): feats_friendly},  # only predicted class
+            "input_features": {reverse_map.get(k, k): float(v) for k, v in model_input.items()},
+            "model_classes": [str(c) for c in class_labels]
+      
+        }
+        print(resp)
+
+        return jsonify(resp)
+
+
+
+
+    except Exception as e:
+        print("SHAP ERROR:", e)
+        return jsonify({"error": str(e), "shap_values": {}}), 400
+      
 
 
 # --- DATASET AVERAGES ENDPOINT ---
