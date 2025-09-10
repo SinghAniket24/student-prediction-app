@@ -1,8 +1,5 @@
 import { useState } from "react";
-
-// In Prediction.js, after getting prediction
 import { useNavigate } from "react-router-dom";
-
 
 export default function Prediction() {
   const [formData, setFormData] = useState({
@@ -22,9 +19,8 @@ export default function Prediction() {
   const [passProbability, setPassProbability] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [navigating, setNavigating] = useState(false); // 🔹 spinner for analysis navigation
   const navigate = useNavigate();
-
-
 
   const mapping = {
     "Past Class Failures": { "None": 0, "One": 1, "Two": 2, "Three or More": 3 },
@@ -72,41 +68,48 @@ export default function Prediction() {
       setPrediction(data.prediction);
       setPassProbability(data.pass_probability);
       setShowModal(true);
-      // Save prediction and payload
-      setTimeout(() => {
-      navigate("/analysis", { state: { payload, prediction: data.prediction } });
-}, 2000); // 2000 ms = 2 seconds
-
-    
-
     } catch (error) {
       console.error("Error while fetching prediction:", error);
       setPrediction("Error connecting to backend.");
       setShowModal(true);
-     
     } finally {
       setLoading(false);
     }
   };
 
+  const handleGenerateAnalysis = () => {
+    setShowModal(false);
+    setNavigating(true);
 
+    const payload = {};
+    Object.keys(formData).forEach((key) => {
+      payload[key] =
+        typeof mapping[key] === "function"
+          ? mapping[key](formData[key])
+          : mapping[key][formData[key]];
+    });
+
+    setTimeout(() => {
+      navigate("/analysis", { state: { payload, prediction } });
+    }, 2000);
+  };
 
   return (
-    
-    <div className="page-container"
+    <div
+      className="page-container"
       style={{
         padding: "20px",
-        maxWidth: "650px",
+        maxWidth: "700px",
         margin: "auto",
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
       }}
     >
       <h2
         style={{
           textAlign: "center",
           marginBottom: "25px",
-          color: "#007bff",
-          fontSize: "clamp(20px, 2.5vw, 28px)",
+          color: "#4a90e2",
+          fontSize: "clamp(22px, 2.5vw, 30px)",
         }}
       >
         Student Performance Prediction
@@ -118,6 +121,10 @@ export default function Prediction() {
           display: "flex",
           flexDirection: "column",
           gap: "18px",
+          backgroundColor: "#f9f9f9",
+          padding: "25px",
+          borderRadius: "12px",
+          boxShadow: "0 6px 15px rgba(0,0,0,0.1)",
         }}
       >
         {Object.keys(formData).map((key) => (
@@ -127,6 +134,7 @@ export default function Prediction() {
                 marginBottom: "6px",
                 fontWeight: "600",
                 fontSize: "clamp(14px, 2vw, 16px)",
+                color: "#333",
               }}
             >
               {key}
@@ -171,15 +179,17 @@ export default function Prediction() {
         <button
           type="submit"
           style={{
-            padding: "12px",
+            padding: "14px",
             borderRadius: "6px",
             border: "none",
-            backgroundColor: "#28a745",
+            backgroundColor: loading ? "#6c757d" : "#28a745",
             color: "white",
             fontWeight: "600",
             cursor: "pointer",
             fontSize: "16px",
+            transition: "background 0.3s ease",
           }}
+          disabled={loading}
         >
           {loading ? "Predicting..." : "Predict"}
         </button>
@@ -206,11 +216,11 @@ export default function Prediction() {
           <div
             style={{
               backgroundColor: "white",
-              padding: "20px",
+              padding: "25px",
               borderRadius: "12px",
               textAlign: "center",
               width: "100%",
-              maxWidth: "400px",
+              maxWidth: "420px",
               boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -227,7 +237,7 @@ export default function Prediction() {
               </p>
             )}
             <button
-              onClick={() => setShowModal(false)}
+              onClick={handleGenerateAnalysis}
               style={{
                 marginTop: "15px",
                 padding: "10px 20px",
@@ -238,26 +248,50 @@ export default function Prediction() {
                 cursor: "pointer",
               }}
             >
-              Close
+              Generate Analysis
             </button>
           </div>
         </div>
       )}
 
-      {/* Responsive Styles */}
-      <style>{`
-        @media (max-width: 600px) {
-          form {
-            gap: 14px;
-          }
-          select, input {
-            font-size: 14px;
-          }
-          button {
-            font-size: 14px !important;
-          }
-        }
-      `}</style>
+      {/* 🔹 Spinner overlay for navigation */}
+      {navigating && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(255,255,255,0.8)",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 2000,
+          }}
+        >
+          <div
+            style={{
+              border: "6px solid #f3f3f3",
+              borderTop: "6px solid #007bff",
+              borderRadius: "50%",
+              width: "50px",
+              height: "50px",
+              animation: "spin 1s linear infinite",
+            }}
+          />
+          <p style={{ marginTop: "15px", fontWeight: "600", color: "#333" }}>
+            Generating Analysis…
+          </p>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 }

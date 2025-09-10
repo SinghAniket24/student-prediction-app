@@ -1,6 +1,9 @@
-
-
 import React, { useEffect, useState } from "react";
+import FeatureContributionChart from "../components/FeatureContributionChart";
+import UserComparisonBars from "../components/UserComparisonBar";
+import { useLocation } from "react-router-dom";
+
+/*eact, { useEffect, useState } from "react";
 import FeatureContributionChart from "../components/FeatureContributionChart";
 import UserComparisonBars from "../components/UserComparisonBar";
 import { useLocation } from "react-router-dom";
@@ -9,156 +12,410 @@ const Analysis = () => {
   const [userComparison, setUserComparison] = useState([]);
   const [shapValues, setShapValues] = useState(null);
   const location = useLocation();
-  const { payload , prediction} = location.state || {}; // this is the mapped user input
-  console.log("Received payload:", payload);  
-  console.log("Prediction:", prediction);
+  const { payload, prediction } = location.state || {}; // mapped user input
 
-    
-    //FEATURE CONTRIBUTION
-    
-    /* dummy data to test rendering
-    const dummy = [
-      { feature: "Absences", contribution: -0.15 },
-      { feature: "Past Class Failures", contribution: 0.20 },
-      { feature: "Family Relationship", contribution: 0.10 },
-      { feature: "Weekend Alcohol Consumption", contribution: -0.15 },
-      { feature: "Higher Education Ambition", contribution: 0.05 },
-    ];
-    
-    setShapValues(dummy);*/
-    useEffect(() => {
-  if (!payload) return;
-  let isMounted = true;
+  // Convert numeric prediction into label
+  const predictionLabel = String(prediction) === "1" ? "✅ Pass" : "❌ Fail";
 
-  const fetchShap = async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:5000/shap", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+  useEffect(() => {
+    if (!payload) return;
+    let isMounted = true;
 
-      const data = await res.json();
+    const fetchShap = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/shap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-      if (!isMounted) return;
+        const data = await res.json();
+        if (!isMounted) return;
 
-      // Defensive check
-      if (!data.shap_values) {
-        console.error("No SHAP values received:", data);
-        setShapValues([]);
-        return;
+        if (!data.shap_values) {
+          setShapValues([]);
+          return;
+        }
+
+        const shapArray = Object.entries(data.shap_values).map(
+          ([feature, contribution]) => ({
+            feature,
+            contribution,
+          })
+        );
+
+        const topShapArray = shapArray
+          .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+          .slice(0, 5);
+
+        setShapValues(topShapArray);
+      } catch (err) {
+        console.error("Error fetching SHAP values:", err);
       }
+    };
 
-      const shapArray = 
-      data && data.shap_values
-      ?Object.entries(data.shap_values).map(([feature, contribution]) => ({
-        feature,
-        contribution,
-      }))
-      : [];
+    const fetchAverages = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/averages");
+        const averages = await res.json();
 
-      // Optional: log SHAP values for debugging
-      console.log("Received SHAP values from backend:", shapArray);
-    
+        if (!averages || !payload) return;
 
-      // Optional: top 5 contributors by absolute value
-      const topShapArray = shapArray
-        .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
-        .slice(0, 5);
+        const comparison = Object.keys(payload)
+          .map((feature) => {
+            const userVal = payload[feature];
+            const avgVal = averages[feature];
+            if (avgVal === undefined) return null;
 
-      setShapValues(topShapArray);
-   
+            return {
+              feature,
+              user: Number(userVal),
+              avg: Number(avgVal),
+              diff: Number(userVal) - Number(avgVal),
+            };
+          })
+          .filter(Boolean);
 
-    } catch (err) {
-      console.error("Error fetching SHAP values:", err);
-    }
-  };
+        setUserComparison(comparison);
+      } catch (err) {
+        console.error("Error fetching averages:", err);
+      }
+    };
 
-  fetchShap();
+    fetchShap();
+    fetchAverages();
 
-
-
-    //Fetch dataset averages
-  
-    /*Example static data (replace with backend fetch)
-    setUserComparison([
-      { feature: "Absences", user: 3, avg: 5 },
-      { feature: "Study Time", user: 2, avg: 4 },
-      { feature: "Failures", user: 0, avg: 0 },
-    ]);*/
-
-
-
-  const fetchAverages = async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:5000/averages");
-      const averages = await res.json();
-
-      // Defensive: make sure averages and payload are valid
-      if (!averages || !payload) return;
-
-
-      // Map into array for your UserComparisonBars component
-      const comparison = Object.keys(payload).map((feature) => {
-        const userVal = payload[feature];
-        const avgVal = averages[feature];
-
-         // Only include if avgVal exists
-        if (avgVal === undefined) return null;
-
-
-        return {
-          feature,
-          user: Number(userVal), // make sure numeric
-          avg: Number(avgVal),
-          diff: Number(userVal) - Number(avgVal), // optional: store difference
-        };
-      }).filter(Boolean); // remove nulls
-
-      setUserComparison(comparison);
-    } catch (err) {
-      console.error("Error fetching averages:", err);
-    }
-  };
-
-  fetchAverages();
-
-
-      return () => {
-    isMounted = false; // cleanup
-  };
-
+    return () => {
+      isMounted = false;
+    };
   }, [payload]);
 
-
-   return (
-  <div className="page-container"
-  style={{
-        padding: "20px",
-        maxWidth: "650px",
+  return (
+    <div
+      style={{
+        padding: "30px",
+        maxWidth: "950px",
         margin: "auto",
-        fontFamily: "Arial, sans-serif",
-      }}>
-    <h2  style={{
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        color: "#333",
+      }}
+    >
+      <h2
+        style={{
           textAlign: "center",
           marginBottom: "25px",
-          color: "#007bff",
-          fontSize: "clamp(20px, 2.5vw, 28px)",
-        }}>Analysis</h2>
-
-    {/* SHAP Feature Contribution */}
-    <FeatureContributionChart shapValues={shapValues} />
-
-    {/* User Comparison */}
-    <div style={{ marginTop: "40px" }}>
-      <h2 className="text-lg font-semibold text-gray-800 mb-4 text-center">
-        Your Inputs vs Dataset Averages
+          background: "linear-gradient(90deg, #007bff, #00c6ff)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          fontSize: "clamp(22px, 2.5vw, 32px)",
+          fontWeight: "800",
+        }}
+      >
+        Detailed Analysis
       </h2>
-      <UserComparisonBars averages={userComparison} />
-    </div>
-  </div>
-);
 
+      {/* 🔹 Prediction Highlight 
+      <div
+        style={{
+          background: predictionLabel.includes("Pass")
+            ? "linear-gradient(135deg, #e6f9f0, #d4f5e6)"
+            : "linear-gradient(135deg, #fdecea, #fbd2d2)",
+          border: predictionLabel.includes("Pass")
+            ? "2px solid #28a745"
+            : "2px solid #dc3545",
+          padding: "25px",
+          borderRadius: "14px",
+          boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+          marginBottom: "35px",
+          textAlign: "center",
+          transition: "transform 0.2s",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: "22px",
+            marginBottom: "12px",
+            color: predictionLabel.includes("Pass") ? "#28a745" : "#dc3545",
+          }}
+        >
+          Prediction Result
+        </h3>
+        <p
+          style={{
+            fontSize: "24px",
+            fontWeight: "700",
+            letterSpacing: "0.5px",
+          }}
+        >
+          {predictionLabel}
+        </p>
+      </div>
+
+      {/* 🔹 SHAP Feature Contribution *
+      <div
+        style={{
+          background: "linear-gradient(145deg, #fdfbfb, #ebedee)",
+          padding: "28px",
+          borderRadius: "14px",
+          border: "1.5px solid #b8c6db",
+          boxShadow: "0 6px 15px rgba(0,0,0,0.07)",
+          marginBottom: "40px",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: "20px",
+            marginBottom: "22px",
+            color: "#2c3e50",
+            textAlign: "center",
+            fontWeight: "700",
+            borderBottom: "2px solid #b8c6db",
+            paddingBottom: "10px",
+          }}
+        >
+          Top 5 Feature Contributions
+        </h3>
+        <FeatureContributionChart shapValues={shapValues} />
+      </div>
+
+      {/* 🔹 User Comparison 
+      <div
+        style={{
+          background: "linear-gradient(145deg, #ffffff, #f7f9fc)",
+          padding: "28px",
+          borderRadius: "14px",
+          border: "1.5px solid #cfd9df",
+          boxShadow: "0 6px 15px rgba(0,0,0,0.07)",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: "20px",
+            marginBottom: "22px",
+            color: "#2c3e50",
+            textAlign: "center",
+            fontWeight: "700",
+            borderBottom: "2px solid #cfd9df",
+            paddingBottom: "10px",
+          }}
+        >
+          Your Inputs vs Dataset Averages
+        </h3>
+        <UserComparisonBars averages={userComparison} />
+      </div>
+    </div>
+  );
+};
+
+export default Analysis;
+*/
+
+
+const Analysis = () => {
+  const [userComparison, setUserComparison] = useState([]);
+  const [shapValues, setShapValues] = useState([]);
+  const [shapResponse, setShapResponse] = useState(null);
+  const location = useLocation();
+  const { payload, prediction } = location.state || {}; // mapped user input
+
+  // Convert numeric prediction into label
+  const predictionLabel = String(prediction) === "1" ? "✅ Pass" : "❌ Fail";
+  
+
+  useEffect(() => {
+    if (!payload) return;
+    let isMounted = true;
+
+    const fetchShap = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/shap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (!isMounted) return;
+        setShapResponse(data);   // ✅ save full response
+
+
+        // ✅ backend returns shap_explanations (array of {feature, contribution})
+        if (!data.shap_explanations) {
+          setShapValues([]);
+          return;
+        }
+
+        const shapArray = data.shap_explanations.map((item) => ({
+          feature: String(item.feature),
+          contribution: Number(item.contribution),
+        }));
+
+        const topShapArray = shapArray
+          .sort((a, b) => Math.abs(b.contribution) - Math.abs(a.contribution))
+          .slice(0, 5);
+
+        setShapValues(topShapArray);
+      } catch (err) {
+        console.error("Error fetching SHAP values:", err);
+      }
+    };
+
+    const fetchAverages = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:5000/averages");
+        const averages = await res.json();
+
+        if (!averages || !payload) return;
+
+        const comparison = Object.keys(payload)
+          .map((feature) => {
+            const userVal = payload[feature];
+            const avgVal = averages[feature];
+            if (avgVal === undefined) return null;
+
+            return {
+              feature,
+              user: Number(userVal),
+              avg: Number(avgVal),
+              diff: Number(userVal) - Number(avgVal),
+            };
+          })
+          .filter(Boolean);
+
+        setUserComparison(comparison);
+      } catch (err) {
+        console.error("Error fetching averages:", err);
+      }
+    };
+
+    fetchShap();
+    fetchAverages();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [payload]);
+
+  return (
+    <div
+      style={{
+        padding: "30px",
+        maxWidth: "950px",
+        margin: "auto",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        color: "#333",
+      }}
+    >
+      <h2
+        style={{
+          textAlign: "center",
+          marginBottom: "25px",
+          background: "linear-gradient(90deg, #007bff, #00c6ff)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          fontSize: "clamp(22px, 2.5vw, 32px)",
+          fontWeight: "800",
+        }}
+      >
+        Detailed Analysis
+      </h2>
+
+      {/* 🔹 Prediction Highlight */}
+      <div
+        style={{
+          background: predictionLabel.includes("Pass")
+            ? "linear-gradient(135deg, #e6f9f0, #d4f5e6)"
+            : "linear-gradient(135deg, #fdecea, #fbd2d2)",
+          border: predictionLabel.includes("Pass")
+            ? "2px solid #28a745"
+            : "2px solid #dc3545",
+          padding: "25px",
+          borderRadius: "14px",
+          boxShadow: "0 6px 18px rgba(0,0,0,0.08)",
+          marginBottom: "35px",
+          textAlign: "center",
+          transition: "transform 0.2s",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: "22px",
+            marginBottom: "12px",
+            color: predictionLabel.includes("Pass") ? "#28a745" : "#dc3545",
+          }}
+        >
+          Prediction Result
+        </h3>
+        <p
+          style={{
+            fontSize: "24px",
+            fontWeight: "700",
+            letterSpacing: "0.5px",
+          }}
+        >
+          {predictionLabel}
+        </p>
+      </div>
+
+      {/* 🔹 SHAP Feature Contribution */}
+      <div
+        style={{
+          background: "linear-gradient(145deg, #fdfbfb, #ebedee)",
+          padding: "28px",
+          borderRadius: "14px",
+          border: "1.5px solid #b8c6db",
+          boxShadow: "0 6px 15px rgba(0,0,0,0.07)",
+          marginBottom: "40px",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: "20px",
+            marginBottom: "22px",
+            color: "#2c3e50",
+            textAlign: "center",
+            fontWeight: "700",
+            borderBottom: "2px solid #b8c6db",
+            paddingBottom: "10px",
+          }}
+        >
+          Top 5 Feature Contributions
+        </h3>
+        <FeatureContributionChart
+          shapValues={shapValues}
+          //predictedClass={prediction}
+          predictedClass={shapResponse?.explanation_for_class || predictionLabel} 
+
+        />
+      </div>
+
+      {/* 🔹 User Comparison */}
+      <div
+        style={{
+          background: "linear-gradient(145deg, #ffffff, #f7f9fc)",
+          padding: "28px",
+          borderRadius: "14px",
+          border: "1.5px solid #cfd9df",
+          boxShadow: "0 6px 15px rgba(0,0,0,0.07)",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: "20px",
+            marginBottom: "22px",
+            color: "#2c3e50",
+            textAlign: "center",
+            fontWeight: "700",
+            borderBottom: "2px solid #cfd9df",
+            paddingBottom: "10px",
+          }}
+        >
+          Your Inputs vs Dataset Averages
+        </h3>
+        <UserComparisonBars averages={userComparison} />
+      </div>
+    </div>
+  );
 };
 
 export default Analysis;

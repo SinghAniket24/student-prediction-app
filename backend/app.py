@@ -43,7 +43,7 @@ def predict():
 
         # Make prediction
         prediction = model.predict(input_df)[0]
-        # Get probability of class 1 (passing )
+        # Get probability of class 1 (passing)
         proba_pass = model.predict_proba(input_df)[0][1]  # index 1 is probability of class 1
 
         return jsonify({
@@ -113,8 +113,7 @@ def shap_explanation():
         print("SHAP ERROR:", e)  # Log full error to console
         return jsonify({"error": str(e), "shap_values": {}}), 400
 '''
-'''
-working 2
+
 @app.route("/shap", methods=["POST"])
 def shap_explanation():
     try:
@@ -123,69 +122,74 @@ def shap_explanation():
             return jsonify({"error": "Invalid input"}), 400
 
         # Remap to training feature names
-        model_input = {feature_mapping[k]: v for k, v in data.items() if k in feature_mapping}
+        model_input = {
+            feature_mapping[k]: v for k, v in data.items() if k in feature_mapping
+        }
         # Build DataFrame in the exact feature order and numeric type
         input_df = pd.DataFrame([model_input], columns=model.feature_names_in_)
 
-
-        # Predict and proba
-        prediction = model.predict(input_df)[0]
+        # Predict + proba
+        prediction = model.predict(input_df)[0]  # predicted class label
         probabilities = model.predict_proba(input_df)[0]
         class_labels = list(model.classes_)
+        pred_class_idx = int(np.where(model.classes_ == 1)[0][0])
 
         # Compute SHAP values
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(input_df)
 
-        pred_class = int(model.predict(input_df)[0])   # 0 = Fail, 1 = Pass
-
-
-        # Normalize and unwrap nested arrays safely
-        def unwrap_scalar(x):
-            x = np.array(x)
-            if x.size == 1:
-                return float(x.item())
-            # If multiple elements, pick first (shouldn't happen for single sample)
-            return float(x.ravel()[0])
-
-
-        # Select the right class's SHAP array (handles list or single-array return)
-        # Build per-class dict: { class_label: [{feature, contribution}, ...] }
-        per_class = {}
+        # Pick SHAP values for the predicted class
         if isinstance(shap_values, list):
-            shap_array = shap_values[pred_class][0]  # first (and only) sample
+            shap_for_pred = shap_values[pred_class_idx][0]  # first (and only) sample
         else:
-            shap_array = shap_values[0]
+            shap_for_pred = shap_values[0]
 
-        # --- Convert safely to floats ---
-        shap_dict = {}
-        for feature, val in zip(model.feature_names_in_, shap_array):
-            if isinstance(val, (list, np.ndarray)):
-                val = np.ravel(val)[0]   # take the first scalar
+        # Helper to unwrap any numpy scalars
+        def unwrap(x):
+            x = np.array(x)
+            return float(x.item()) if x.size == 1 else float(x.ravel()[0])
 
-                #shap_dict[feature] = float(val.item())  # safely unwrap
-            shap_dict[feature] = float(val)
         # Convert back to friendly names for frontend
         reverse_map = {v: k for k, v in feature_mapping.items()}
-        shap_dict_friendly = {reverse_map.get(f, f): val for f, val in shap_dict.items()}
+        feats = [
+            {"feature": reverse_map.get(f, f), "contribution": unwrap(val)}
+            for f, val in zip(model.feature_names_in_, shap_for_pred)
+        ]
+        feats_sorted = sorted(feats, key=lambda x: abs(x["contribution"]), reverse=True)
 
-        shap_dict_sorted = dict(sorted(shap_dict_friendly.items(), key=lambda x: abs(x[1]), reverse=True))
+        '''resp = {
+            "predicted_class": str(prediction),            # e.g. "1"
+            "predicted_class_index": pred_class_idx,       # e.g. 1
+            "probabilities": {
+                str(cls): float(p) for cls, p in zip(class_labels, probabilities)
+            },
+            "shap_explanations": feats_sorted,             # ✅ contributions only for predicted class
+            "input_features": {
+                reverse_map.get(k, k): float(v) for k, v in model_input.items()
+            },
+            "model_classes": [str(c) for c in class_labels],
+            "explanation_for_class": str(prediction)       # ✅ make it explicit
+        }'''
+        resp = {
+    "predicted_class": str(prediction),
+    "predicted_class_index": pred_class_idx,
+    "probabilities": {str(cls): float(p) for cls, p in zip(class_labels, probabilities)},
+    "shap_explanations": feats_sorted,
+    "input_features": {reverse_map.get(k, k): float(v) for k, v in model_input.items()},
+    "model_classes": [str(c) for c in class_labels],
+    "explanation_for_class": "Pass" if str(prediction) == "1" else "Fail"  # ✅ add this
+}
 
-        print("MODEL CLASSES:", model.classes_)
-        print("MODEL.feature_names_in_:", model.feature_names_in_)
-        print("INPUT DF:\n", input_df)
-       
-        print("PREDICT_PROBA:", model.predict_proba(input_df)[0])
-        print("RAW SHAP TYPE/SHAPE:", type(shap_values), np.array(shap_values).shape)
-        return jsonify({"shap_values": shap_dict_sorted})
 
-
-
+        print("SHAP RESPONSE:", resp)  # Debugging log
+        return jsonify(resp)
 
     except Exception as e:
         print("SHAP ERROR:", e)
         return jsonify({"error": str(e), "shap_values": {}}), 400
-      
+
+
+
 '''
 @app.route("/shap", methods=["POST"])
 def shap_explanation():
@@ -229,7 +233,7 @@ def shap_explanation():
             return float(x.ravel()[0])
 
 
-        '''
+        
         # Select the right class's SHAP array (handles list or single-array return)
         # Build per-class dict: { class_label: [{feature, contribution}, ...] }
         per_class = {}
@@ -251,7 +255,7 @@ def shap_explanation():
             arr = shap_values[0]
             feats = [{"feature": f, "contribution": unwrap_scalar(v)} for f, v in zip(model.feature_names_in_, arr)]
             per_class[str(class_labels[0])] = sorted(feats, key=lambda x: abs(x["contribution"]), reverse=True)
-            '''
+        
 
         # Build feature contributions
         feats = [{"feature": f, "contribution": unwrap_scalar(v)}
@@ -294,7 +298,7 @@ def shap_explanation():
         print("SHAP ERROR:", e)
         return jsonify({"error": str(e), "shap_values": {}}), 400
       
-
+'''
 
 # --- DATASET AVERAGES ENDPOINT ---
 '''@app.route("/averages", methods=["GET"])
