@@ -99,7 +99,7 @@ const UserComparisonGroupedBar = ({ averages }) => {
 
           />
           <YAxis />
-          <Tooltip />
+          <Tooltip formatter={(value) => Number(value).toFixed(2)} />
           <Legend verticalAlign="top" height={36} />
           <Bar dataKey="Dataset Avg" fill="#3b82f6" />
           <Bar dataKey="Your Input" fill="#f97316" />

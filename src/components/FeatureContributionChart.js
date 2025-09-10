@@ -95,7 +95,7 @@ const insight = `Your ${positiveFeatures.join(', ')} are the main reasons for th
           margin={{ top: 10, right: 30, left: 100, bottom: 10 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis type="number"  domain={[-1, 1]}/>
+          <XAxis type="number"  domain={["auto","auto"]}/>
           <YAxis dataKey="feature" type="category" width={120}  
            tickFormatter={(val) => val.length > 20 ? val.slice(0,20) + '...' : val}
            />
@@ -107,7 +107,10 @@ const insight = `Your ${positiveFeatures.join(', ')} are the main reasons for th
             dataKey="contribution"
             barSize={22}
             // Red if >0 (pushing towards Fail), Green if <0 (helping Pass)
-            label={{ position: "right" }}
+            label={{ position: "bottom",
+                  formatter: (val) => val.toFixed(3) // 3 decimals
+
+             }}
             //background={{ fill: "#e0e0e0" }} // gray background for zero line
 
           >
