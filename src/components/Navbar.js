@@ -29,9 +29,15 @@ export default function Navbar() {
         </h1>
 
         {/* Desktop Links */}
-        <div className="nav-links" style={{ display: isOpen ? "block" : "flex", gap: "15px" }}>
+        <div
+          className="nav-links"
+          style={{ display: isOpen ? "block" : "flex", gap: "15px" }}
+        >
           <Link style={{ color: "white", textDecoration: "none" }} to="/">
             Home
+          </Link>
+          <Link style={{ color: "white", textDecoration: "none" }} to="/notebook">
+            Notebook
           </Link>
           {/*<Link style={{ color: "white", textDecoration: "none" }} to="/analysis">
             Analysis
@@ -71,6 +77,7 @@ export default function Navbar() {
           <Link style={{ color: "white", textDecoration: "none" }} to="/analysis">
             Analysis
           </Link>
+   
         </div>
       )}
 
@@ -87,4 +94,3 @@ export default function Navbar() {
     </nav>
   );
 }
-
