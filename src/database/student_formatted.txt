@@ -1,0 +1,103 @@
+# Student Dataset Attributes
+
+This dataset contains attributes for both **student-mat.csv** (Math course) and **student-por.csv** (Portuguese language course).
+
+---
+
+### Demographic Information
+1. school – Student's school
+   - "GP" = Gabriel Pereira
+   - "MS" = Mousinho da Silveira
+
+2. sex – Student's gender
+   - "F" = Female
+   - "M" = Male
+
+3. age – Student's age (15 to 22)
+
+4. address – Home address type
+   - "U" = Urban
+   - "R" = Rural
+
+5. famsize – Family size
+   - "LE3" = Less or equal to 3
+   - "GT3" = Greater than 3
+
+6. Pstatus – Parent's cohabitation status
+   - "T" = Living together
+   - "A" = Apart
+
+---
+
+### Parental Information
+7. Medu – Mother's education (0–4)
+   - 0 = None
+   - 1 = Primary (4th grade)
+   - 2 = 5th–9th grade
+   - 3 = Secondary education
+   - 4 = Higher education
+
+8. Fedu – Father’s education (0–4) (same scale as Medu)
+
+9. Mjob – Mother’s job
+   - "teacher", "health", "services", "at_home", "other"
+
+10. Fjob – Father’s job
+   - "teacher", "health", "services", "at_home", "other"
+
+11. reason – Reason for choosing school
+   - "home", "reputation", "course", "other"
+
+12. guardian – Student’s guardian
+   - "mother", "father", "other"
+
+---
+
+### Study & School Life
+13. traveltime – Home → School travel time
+   - 1 = <15 min
+   - 2 = 15–30 min
+   - 3 = 30–60 min
+   - 4 = >1 hour
+
+14. studytime – Weekly study time
+   - 1 = <2 hours
+   - 2 = 2–5 hours
+   - 3 = 5–10 hours
+   - 4 = >10 hours
+
+15. failures – Number of past class failures
+   - 0, 1, 2, 3, or 4 (≥4 failures)
+
+16. schoolsup – Extra educational support (yes/no)
+17. famsup – Family educational support (yes/no)
+18. paid – Extra paid classes in subject (yes/no)
+19. activities – Extra-curricular activities (yes/no)
+20. nursery – Attended nursery school (yes/no)
+21. higher – Aspires to higher education (yes/no)
+22. internet – Internet access at home (yes/no)
+23. romantic – In a romantic relationship (yes/no)
+
+---
+
+### Social & Health Factors
+24. famrel – Family relationship quality (1–5)
+25. freetime – Free time after school (1–5)
+26. goout – Going out with friends (1–5)
+27. Dalc – Workday alcohol consumption (1–5)
+28. Walc – Weekend alcohol consumption (1–5)
+29. health – Current health status (1–5)
+30. absences – Number of school absences (0–93)
+
+---
+
+### Grades
+31. G1 – First period grade (0–20)
+32. G2 – Second period grade (0–20)
+33. G3 – Final grade (0–20, target variable)
+
+---
+
+### Note
+- Some students (≈382) appear in both datasets.
+- They can be identified by matching identical attributes (see annexed R file).
