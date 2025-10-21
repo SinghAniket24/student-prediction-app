@@ -1,5 +1,4 @@
 🎓 Student Performance Prediction Website
-📘 Overview
 
 This React-based web application predicts student academic performance using a trained machine learning model integrated through a Flask backend.
 Users can enter their demographic and academic details to receive predictions such as Pass / Fail along with visual insights.
